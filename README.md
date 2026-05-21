@@ -112,6 +112,13 @@ Everything is done in the Airtable phone app.
 and `End` (inclusive — a Sat+Sun rental is Start Sat, End Sun). The page
 updates within ~15 minutes.
 
+**Booking requests from renters.** Every bike card on the site has a
+"Request this bike" button linking to a public Airtable form. Submissions
+land in the **Requests** table. Review each one: if the bike is free for
+those dates, add it to the **Bookings** table to confirm; otherwise reply
+to the renter to decline. Requests never affect the public page on their
+own — only confirmed Bookings do.
+
 **Block a bike** (service, personal use) — add a normal booking for those
 dates. Do **not** untick `Active` for this.
 

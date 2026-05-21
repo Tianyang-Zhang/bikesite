@@ -116,10 +116,21 @@ test('the text-to-book link targets the configured phone', () => {
   assert.match(html, /sms:\+15551234567/);
 });
 
-test('no text-to-book link is rendered when the phone is empty', () => {
+test('no call to action is rendered when there is no phone and no form URL', () => {
   const html = renderPage({ bikes: [bike()] }, TEMPLATE, { ...OPTS, contactPhone: '' });
   assert.equal(html.includes('bike__cta'), false);
   assert.equal(html.includes('Text to book'), false);
+});
+
+test('a request-form link is shown when a form URL is set and no phone', () => {
+  const html = renderPage({ bikes: [bike()] }, TEMPLATE, {
+    ...OPTS,
+    contactPhone: '',
+    requestFormUrl: 'https://airtable.com/app1/shrTest',
+  });
+  assert.match(html, /Request this bike/);
+  assert.match(html, /airtable\.com\/app1\/shrTest/);
+  assert.match(html, /prefill_Bike=Ducati/);
 });
 
 test('bike data is HTML-escaped', () => {

@@ -24,6 +24,10 @@ export const config = {
   // Static footer text.
   footerNote: 'Updated automatically — check here before you plan your weekend.',
 
+  // Public Airtable form where renters submit booking requests.
+  // Each bike card links to it. Leave empty to hide the request button.
+  requestFormUrl: 'https://airtable.com/appaNlaTgNhwKZYDK/shri6jqLjZLx2hOJn',
+
   airtable: {
     // Base ID — not secret (only an address). The read token is the secret.
     baseId: 'appaNlaTgNhwKZYDK',

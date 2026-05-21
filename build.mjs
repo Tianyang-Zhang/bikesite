@@ -192,6 +192,7 @@ export async function runBuild({
     businessName: config.businessName,
     tagline: config.tagline,
     contactPhone: config.contactPhone,
+    requestFormUrl: config.requestFormUrl,
     footerNote: config.footerNote,
     updatedLabel,
   });
