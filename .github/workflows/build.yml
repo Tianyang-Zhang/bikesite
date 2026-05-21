@@ -43,6 +43,12 @@ jobs:
           # → Actions. The Airtable base ID is non-secret config.mjs.
           AIRTABLE_TOKEN: ${{ secrets.AIRTABLE_TOKEN }}
 
+      - name: Save the double-booking report for the conflict-check job
+        uses: actions/upload-artifact@v4
+        with:
+          name: conflict-report
+          path: conflict-report.json
+
       - uses: actions/configure-pages@v5
 
       - uses: actions/upload-pages-artifact@v3
@@ -58,3 +64,26 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Fails — which makes GitHub email you — when Airtable contains a
+  # double-booking. Runs independently of deploy, so a conflict never
+  # blocks the page from updating; it just raises the alarm.
+  conflict-check:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+    steps:
+      - name: Download the double-booking report
+        uses: actions/download-artifact@v4
+        with:
+          name: conflict-report
+      - name: Fail if any bike is double-booked
+        run: |
+          count=$(jq '.conflicts | length' conflict-report.json)
+          if [ "$count" -gt 0 ]; then
+            echo "::error::$count double-booking(s) found in Airtable — fix them now"
+            jq -r '.conflicts[] | "  x " + .' conflict-report.json
+            exit 1
+          fi
+          echo "No double-bookings. OK"

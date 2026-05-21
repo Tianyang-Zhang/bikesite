@@ -206,7 +206,11 @@ export async function runBuild({
   // .nojekyll tells GitHub Pages to serve the output verbatim.
   fs.writeFileSync(path.join(outDir, '.nojekyll'), '');
 
-  return { data, html, warnings, bikeCount: bikes.length };
+  // Double-bookings — the subset of warnings that are overlapping bookings.
+  // The CI workflow turns a non-empty list into a failing check + email alert.
+  const conflicts = warnings.filter((w) => /overlapping bookings/i.test(w));
+
+  return { data, html, warnings, conflicts, bikeCount: bikes.length };
 }
 
 // ---- CLI entry ---------------------------------------------------------
@@ -238,9 +242,21 @@ if (isMain()) {
   runBuild({ apiKey, baseId, outDir, rootDir })
     .then((result) => {
       console.log(`Built ${result.bikeCount} bike(s) -> ${outDir}`);
+      // conflict-report.json is read by the workflow's conflict-check job.
+      fs.writeFileSync(
+        path.join(rootDir, 'conflict-report.json'),
+        JSON.stringify(
+          { generatedAt: new Date().toISOString(), conflicts: result.conflicts },
+          null,
+          2,
+        ) + '\n',
+      );
       if (result.warnings.length > 0) {
         console.warn(`\n${result.warnings.length} warning(s):`);
         for (const w of result.warnings) console.warn(`  - ${w}`);
+      }
+      if (result.conflicts.length > 0) {
+        console.warn(`\n${result.conflicts.length} DOUBLE-BOOKING(S) DETECTED — see above.`);
       }
     })
     .catch((err) => {

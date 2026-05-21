@@ -121,7 +121,10 @@ retire a bike that still has upcoming bookings shown.
 **The ⚠ marker** means a data problem on that bike — two bookings overlap,
 or a booking has a bad date. Open Airtable and fix it. Catch overlaps early
 using Airtable's per-bike Calendar view, where they show as overlapping
-blocks.
+blocks. A double-booking also **fails the `conflict-check` job** in GitHub
+Actions, so GitHub emails you. A red workflow run therefore means one of two
+things — open the run to see which job is red: `build` = a broken pipeline;
+`conflict-check` = a double-booking to fix (the page still deployed fine).
 
 **The "updated" timestamp** is your health check. A stamp **older than ~45
 minutes means the build pipeline is broken** — and while it is broken, new

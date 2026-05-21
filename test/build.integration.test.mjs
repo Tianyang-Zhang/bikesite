@@ -106,6 +106,11 @@ test('integration: a full build produces the page, data file, and assets', async
     const enfield = data.bikes.find((b) => b.name === 'Royal Enfield Classic');
     assert.ok(enfield.warnings.some((w) => /overlap/i.test(w)));
     assert.ok(honda.warnings.some((w) => /bad/i.test(w)));
+
+    // The build surfaces double-bookings as top-level conflicts (for alerting).
+    assert.equal(result.conflicts.length, 1);
+    assert.match(result.conflicts[0], /Royal Enfield Classic/);
+    assert.match(result.conflicts[0], /overlapping/i);
   } finally {
     fs.rmSync(outDir, { recursive: true, force: true });
   }
