@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{TITLE}}</title>
+  <meta name="description" content="{{TAGLINE}}">
+  <meta name="color-scheme" content="light">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-header__inner">
+      <h1 class="site-title">{{TITLE}}</h1>
+      <p class="site-tagline">{{TAGLINE}}</p>
+      <p class="site-updated">Availability updated {{UPDATED}}</p>
+    </div>
+  </header>
+
+  <main class="fleet">
+{{BIKES}}
+  </main>
+
+  <footer class="site-footer">
+    <p class="site-footer__note">{{FOOTER}}</p>
+    <p class="site-footer__legend">
+      <span aria-hidden="true">⚠</span> means a data problem on that bike —
+      the manager fixes it in Airtable.
+    </p>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-label="No photo available">
+  <rect width="800" height="500" fill="#ececed"/>
+  <g fill="none" stroke="#bdbdc4" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="268" cy="312" r="74"/>
+    <circle cx="532" cy="312" r="74"/>
+    <path d="M268 312 H404 L470 222 H548"/>
+    <path d="M532 312 L452 222 H360"/>
+    <path d="M404 312 L470 222"/>
+  </g>
+  <text x="400" y="448" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="36" font-weight="600" fill="#9a9aa2" text-anchor="middle">Photo coming soon</text>
+</svg>

@@ -1,0 +1,14 @@
+{
+  "name": "bikesite",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Weekend Motorcycle Rental — live availability page (build-time baked static site)",
+  "scripts": {
+    "test": "node --test",
+    "build": "node build.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
