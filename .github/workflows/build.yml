@@ -9,6 +9,10 @@ on:
   push:
     branches: [main]
   workflow_dispatch: {}
+  # Optional: an Airtable automation can fire this to rebuild within
+  # ~1-2 min of an edit. Unused until such an automation is added.
+  repository_dispatch:
+    types: [airtable-changed]
 
 # Least privilege: read the repo, publish to Pages.
 permissions:
