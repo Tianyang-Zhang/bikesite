@@ -154,7 +154,7 @@ async function handleSubmit(e) {
   if (!start || !end) return setMsg('Pick both dates.', 'error');
   if (end < start)    return setMsg('End date can\'t be before start date.', 'error');
   if (!name)          return setMsg('Your name is required.', 'error');
-  if (!contact)       return setMsg('A contact (email or phone) is required.', 'error');
+  if (!contact)       return setMsg('Your WeChat ID is required so we can reach you.', 'error');
 
   submitBtn.disabled = true;
 
@@ -177,7 +177,7 @@ async function handleSubmit(e) {
       return setMsg('Sorry — those dates were just taken on this bike. Pick different dates.', 'error');
     }
     if (error.code === '42501' || /row-level security/i.test(error.message)) {
-      return setMsg('Booking rejected — the dates must start today or later, end within 30 days, and name/contact must be filled in.', 'error');
+      return setMsg('Booking rejected — the dates must start today or later, end within 30 days, and name + WeChat ID must be filled in.', 'error');
     }
     return setMsg('Could not save: ' + error.message, 'error');
   }

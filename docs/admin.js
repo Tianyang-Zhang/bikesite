@@ -131,7 +131,7 @@ function renderBookings() {
       <td data-label="Bike">${esc(bikeName(b.bike_id))}</td>
       <td data-label="Dates">${esc(b.start_date)} → ${esc(b.end_date)}</td>
       <td data-label="Renter">${esc(b.renter_name)}</td>
-      <td data-label="Contact">${esc(b.renter_contact)}</td>
+      <td data-label="WeChat">${esc(b.renter_contact)}</td>
       <td data-label="Status"><span class="status-pill status-${esc(b.status)}">${esc(b.status)}</span></td>
       <td class="row-actions">
         <button type="button" data-edit-booking="${b.id}">Edit</button>
