@@ -1,0 +1,202 @@
+/* BikeSite v2 — public booking page. Mobile-first; no framework. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+:root {
+  --fg:            #1d1d1f;
+  --fg-muted:      #6e6e73;
+  --fg-faint:      #a1a1a6;
+  --bg:            #ffffff;
+  --bg-soft:       #f5f5f7;
+  --border:        #e5e5e5;
+  --border-strong: #d2d2d7;
+  --accent:        #0071e3;
+  --accent-hover:  #0077ed;
+  --danger:        #d12c2c;
+  --success:       #1d8a3e;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  color: var(--fg);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+header {
+  padding: 1.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: center;
+}
+header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+header .tagline {
+  color: var(--fg-muted);
+  margin: 0.35rem 0 0;
+  font-size: 0.95rem;
+}
+
+main {
+  padding: 1rem;
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.state {
+  text-align: center;
+  color: var(--fg-muted);
+  padding: 2rem 1rem;
+}
+.state.error { color: var(--danger); }
+
+.bikes {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+@media (min-width: 640px) {
+  .bikes { grid-template-columns: 1fr 1fr; }
+}
+
+.bike {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+.bike img,
+.bike .photo-placeholder {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 0.75rem;
+  background: var(--bg-soft);
+}
+.bike .photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-faint);
+  font-size: 0.9rem;
+}
+.bike h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+.bike .meta {
+  color: var(--fg-muted);
+  font-size: 0.9rem;
+  margin: 0 0 0.5rem;
+}
+.bike .price {
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+.bike .taken-dates {
+  font-size: 0.85rem;
+  color: var(--fg-faint);
+  margin: 0 0 0.75rem;
+}
+.bike button {
+  margin-top: auto;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.bike button:hover { background: var(--accent-hover); }
+.bike button:disabled { background: var(--fg-faint); cursor: not-allowed; }
+
+/* Booking modal */
+dialog#booking-modal {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  width: min(90vw, 380px);
+  color: var(--fg);
+}
+dialog#booking-modal::backdrop {
+  background: rgba(0, 0, 0, 0.4);
+}
+dialog#booking-modal h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+}
+dialog#booking-modal form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+dialog#booking-modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+}
+dialog#booking-modal input {
+  padding: 0.55rem;
+  border: 1px solid var(--border-strong);
+  border-radius: 6px;
+  font-size: 1rem;
+  color: var(--fg);
+  background: var(--bg);
+  font-family: inherit;
+}
+dialog#booking-modal .actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+dialog#booking-modal button {
+  padding: 0.55rem 1.1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid var(--border-strong);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+}
+dialog#booking-modal button[type="submit"] {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+}
+dialog#booking-modal button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.message { font-size: 0.9rem; min-height: 1.2em; }
+.message.error   { color: var(--danger); }
+.message.success { color: var(--success); }
+
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0.75rem 1rem;
+  background: var(--fg);
+  color: white;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
