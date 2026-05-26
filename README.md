@@ -1,164 +1,105 @@
-# Weekend Bike Rentals — live availability page
+# BikeSite — live self-serve motorcycle rental
 
-A read-only, manager-maintained availability page for a weekend motorcycle
-rental business. Renters see, per bike with photos, which weekends are free;
-they still text to book. The manager keeps one source of truth in Airtable.
+A free, live website where renters **book bikes directly**, **double-bookings are physically impossible** (enforced by Postgres, not just app code), and the manager can **check / modify / cancel / move** any booking from a single admin page.
 
-Full rationale and design: [`DESIGN-DOC.md`](DESIGN-DOC.md).
+- **Public booking page:** https://tianyang-zhang.github.io/bikesite/
+- **Manager console:** https://tianyang-zhang.github.io/bikesite/admin.html
 
-## How it works
-
-There is **no backend and no server**. The renter's page is plain static
-files on a CDN.
+## Architecture
 
 ```
-Airtable (Bikes + Bookings)  ──fetch──▶  build.mjs  ──writes──▶  dist/
-   edited from the phone app              (GitHub Actions,        (index.html,
-                                           every ~15 min)          photos, css)
-                                                │
-                                                ▼
-                                          GitHub Pages ──▶ renter's phone
+┌──────────────────────────────────────────────────────────┐
+│   GitHub Pages (free)                                    │
+│     docs/index.html  ← public booking page               │
+│     docs/admin.html  ← manager console                   │
+│     vanilla HTML/CSS/JS + @supabase/supabase-js (CDN)    │
+└──────────────────────────────────────────────────────────┘
+                            │
+                            ▼
+┌──────────────────────────────────────────────────────────┐
+│   Supabase (free tier)                                   │
+│     Postgres   ← `bikes`, `bookings`, `availability`     │
+│     Auth       ← manager email + password login          │
+│     Realtime   ← every open page updates live            │
+│     Storage    ← bike photos (optional)                  │
+└──────────────────────────────────────────────────────────┘
 ```
 
-`build.mjs` fetches Airtable **at build time**, bakes the data and photos
-into static files, and deploys. The Airtable token never reaches the
-browser. The page can be up to ~15 minutes stale — it shows a "last
-updated" timestamp so that is visible.
+**Cost: $0/month.** Supabase free tier + GitHub Pages.
 
-| File | Role |
-|---|---|
-| `build.mjs` | Orchestrator — the only file that does network/disk I/O. |
-| `lib/dates.mjs` | Weekend-window date math. Pure. |
-| `lib/availability.mjs` | Free/busy, overlap, booking validation. Pure. |
-| `lib/project.mjs` | Builds the public model — **excludes private fields**. Pure. |
-| `lib/render.mjs` | Renders the HTML. Pure. |
-| `config.mjs` | All settings you edit (timezone, phone, base ID, …). |
-| `index.template.html`, `styles.css` | Page template and styling. |
-| `assets/placeholder.svg` | Shown when a bike has no photo. |
-| `.github/workflows/build.yml` | The scheduled build + deploy. |
+A small GitHub Actions cron (`.github/workflows/keep-alive.yml`) hits one Supabase endpoint twice a week so the free project never pauses (the free tier pauses after 7 days idle).
 
-No runtime dependencies. Node 20+ only.
+## The heart of the design
 
-## One-time setup
+```sql
+ALTER TABLE bookings ADD CONSTRAINT no_overlap
+  EXCLUDE USING gist (
+    bike_id                               WITH =,
+    daterange(start_date, end_date, '[]') WITH &&
+  ) WHERE (status = 'confirmed');
+```
 
-### 1. Create the Airtable base
+Postgres itself refuses to store two overlapping confirmed bookings for the same bike. Not app code that tries to prevent it — the database physically cannot store conflicting data. When an insert violates the constraint the frontend catches the `23P01` error and shows: *"Sorry — those dates were just taken on this bike. Pick different dates."*
 
-Make a base with two tables.
+## How the data is fenced
 
-**Bikes**
+Row-Level Security (`supabase/03_rls.sql`):
 
-| Field | Type | Notes |
-|---|---|---|
-| `Name` | Single line text | e.g. "Ducati Monster". |
-| `Type` | Single select | Cruiser, Naked, Sport, Adventure, … |
-| `Engine` | Single line text | e.g. "937cc". |
-| `Price per day` | Currency | Optional — shown only if set. |
-| `Photo` | Attachment | One photo per bike. |
-| `Display order` | Number | Lower numbers show first. |
-| `Active` | Checkbox | Tick = in the fleet. See below. |
+- **Anonymous clients** (the public booking page) can:
+  - Read every bike (`bikes.SELECT`)
+  - Read the contact-free `availability` view (only `bike_id`, `start_date`, `end_date`)
+  - Insert new bookings — guarded by CHECKs: `status = 'confirmed'`, `start_date >= current_date`, `duration ≤ 30 days`, non-empty name and contact.
+- **Anonymous clients cannot** read renter names or contacts, edit any booking, or modify bikes.
+- **The authenticated manager** (signed in via the admin page) can do all of it.
 
-**Bookings**
+The `service_role` key is never used by the frontend and is never written to the repo. Only the **anon** key appears in `docs/supabase-config.js`, where it belongs.
 
-| Field | Type | Notes |
-|---|---|---|
-| `Bike` | Link to Bikes | The bike this booking is for. |
-| `Start` | Date | First day out, inclusive. |
-| `End` | Date | Last day out, inclusive. |
-| `Renter note` | Single line text | Private. Never shown on the page. |
+## Repository layout
 
-Bookings are **whole days** — there are no time slots.
+```
+docs/                        ← what GitHub Pages serves
+  index.html                 ← public booking page
+  admin.html                 ← manager console
+  booking.js, admin.js
+  styles.css, admin.css
+  supabase-config.js         ← Project URL + anon key (public by design)
+  .nojekyll                  ← Pages serves files as-is
 
-### 2. Get a read token
+supabase/
+  01_schema.sql              ← tables + the no_overlap constraint
+  03_rls.sql                 ← RLS policies + the availability view
+  checkpoint1_test.sql       ← self-rolling-back proof of no_overlap
+  README.md
 
-In Airtable → Builder hub → Personal access tokens, create a token with
-the **`data.records:read`** scope, granted to this base. Copy it once.
+.github/workflows/
+  keep-alive.yml             ← Mon/Thu cron, keeps Supabase awake
 
-> Airtable read tokens are base-wide — the token *can* read `Renter note`.
-> That field stays private because `build.mjs` never writes it to any
-> public file ([`lib/project.mjs`](lib/project.mjs)), not because of token
-> scoping. A unit test and an integration test both enforce this.
-
-### 3. Edit `config.mjs`
-
-Open [`config.mjs`](config.mjs) and set every value marked `« EDIT »`:
-
-- `timezone` — your business's IANA timezone.
-- `businessName`, `tagline`, `footerNote` — header and footer text.
-- `contactPhone` — the number renters text (E.164, e.g. `+15551234567`).
-- `airtable.baseId` — your base ID (starts with `app`; it is in the
-  Airtable API docs URL for your base). Not secret.
-
-### 4. Repo, Pages, and the secret
-
-1. Push this project to a **public** GitHub repo. Public repos get
-   unlimited free Actions minutes; the token is a secret, never in code.
-2. Settings → Secrets and variables → Actions → **New repository secret**:
-   name `AIRTABLE_TOKEN`, value the token from step 2.
-3. Settings → Pages → **Source: GitHub Actions**.
-
-### 5. The first build
-
-Actions tab → "Build & deploy availability page" → **Run workflow**.
-
-When it goes green, open the published URL and check the page on a phone.
-**Only share the URL after this first build is confirmed live** — there is
-no previous deploy to fall back on.
-
-## Manager's guide
-
-Everything is done in the Airtable phone app.
-
-**Add a booking.** Bookings table → new row → pick the `Bike`, set `Start`
-and `End` (inclusive — a Sat+Sun rental is Start Sat, End Sun). The page
-updates within ~15 minutes.
-
-**Booking requests from renters.** Every bike card on the site has a
-"Request this bike" button linking to a public Airtable form. Submissions
-land in the **Requests** table. Review each one: if the bike is free for
-those dates, add it to the **Bookings** table to confirm; otherwise reply
-to the renter to decline. Requests never affect the public page on their
-own — only confirmed Bookings do.
-
-**Block a bike** (service, personal use) — add a normal booking for those
-dates. Do **not** untick `Active` for this.
-
-**Retire a bike** — untick `Active`. It leaves the page entirely. Do not
-retire a bike that still has upcoming bookings shown.
-
-**The ⚠ marker** means a data problem on that bike — two bookings overlap,
-or a booking has a bad date. Open Airtable and fix it. Catch overlaps early
-using Airtable's per-bike Calendar view, where they show as overlapping
-blocks. A double-booking also **fails the `conflict-check` job** in GitHub
-Actions, so GitHub emails you. A red workflow run therefore means one of two
-things — open the run to see which job is red: `build` = a broken pipeline;
-`conflict-check` = a double-booking to fix (the page still deployed fine).
-
-**The "updated" timestamp** is your health check. A stamp **older than ~45
-minutes means the build pipeline is broken** — and while it is broken, new
-⚠ warnings stop appearing. Check the repo's Actions tab.
-
-**Housekeeping** — Airtable's free tier holds ~1,000 records per base.
-Delete past bookings every few months.
-
-This page **flags** double-bookings; it cannot **prevent** you typing one
-into Airtable. If double-bookings still happen after a month, that is the
-signal to move to off-the-shelf rental software (see `DESIGN-DOC.md`).
+DESIGN-DOC.md                ← v1 rationale (kept for context)
+LIVE-BOOKING-PLAN.md         ← v2 build plan (kept for context)
+```
 
 ## Local development
 
 ```sh
-node --test                 # run the full test suite
-
-# Run a real build (writes ./dist):
-AIRTABLE_TOKEN=your_token node build.mjs
-
-# Preview the result:
-cd dist && python3 -m http.server 8000   # then open http://localhost:8000
+python3 -m http.server 8000 --directory docs
+# then open http://localhost:8000/ (public) or /admin.html (manager)
 ```
 
-Requires Node 20+. The `lib/` modules are pure and unit-tested; `build.mjs`
-has an integration test that runs against saved fixtures — no network or
-Airtable account needed to run the tests.
+## Deployment
 
-> GitHub disables scheduled workflows after 60 days with no repo activity.
-> If the page stops refreshing, open the Actions tab and re-enable it.
+`docs/` is the GitHub Pages source (**Settings → Pages → "Deploy from a branch" → `main` / `/docs`**). Any push to `main` that changes `docs/` triggers an automatic redeploy.
+
+## Adding a bike
+
+1. Sign in to the manager console.
+2. Bikes → **+ Add bike**.
+3. Fill name, type, engine, price/day, optionally a photo URL.
+4. The bike appears on the public page instantly (Realtime broadcast).
+
+## Managing bookings
+
+The manager console lists every booking with renter contacts (visible only when signed in). Edit dates, **cancel** (status → `cancelled`, the dates immediately free up for re-booking — the `no_overlap` constraint only applies to confirmed rows), or delete. Every change appears on the public page live.
+
+## Manual database changes
+
+For ad-hoc work, use the Supabase **SQL Editor** under your project. Always run as the default `postgres` role — `service_role` is for emergencies only and must never reach client code.
