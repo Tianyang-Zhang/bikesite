@@ -1,0 +1,30 @@
+name: Supabase keep-alive
+
+# Free Supabase projects pause after 7 days of zero activity. We hit a trivial
+# read endpoint Mondays + Thursdays so we never go more than 4 days idle.
+on:
+  schedule:
+    - cron: "0 9 * * 1,4"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: GET /rest/v1/bikes?limit=1
+        env:
+          # The anon key is public by design — it's already in
+          # docs/supabase-config.js, served as part of the static site.
+          # Row-Level Security protects the data; this just touches the DB.
+          SUPABASE_URL: https://muwboglmwdooismfvuof.supabase.co
+          SUPABASE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im11d2JvZ2xtd2Rvb2lzbWZ2dW9mIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0ODA2NzgsImV4cCI6MjA5NTA1NjY3OH0.y2_ejmwkJVFJE_6C0vMqLq0C29zvNSsvcU7jybnemcE
+        run: |
+          set -e
+          code=$(curl -sS -o /tmp/body -w "%{http_code}" \
+            -H "apikey: $SUPABASE_KEY" \
+            "$SUPABASE_URL/rest/v1/bikes?select=id&limit=1")
+          echo "HTTP $code"
+          echo "Body:"
+          cat /tmp/body
+          echo
+          test "$code" = "200"
