@@ -40,6 +40,7 @@ const liveChannel = supabase.channel('availability-changes', {
 liveChannel
   .on('broadcast', { event: 'changed' }, async () => {
     await reloadAvailability();
+    await applySettings();
     render();
   })
   .subscribe();
@@ -47,7 +48,24 @@ liveChannel
 // --- boot ---
 cancelBtn.addEventListener('click', () => modal.close());
 form.addEventListener('submit', handleSubmit);
+applySettings();   // fire-and-forget — replaces hardcoded title/tagline once loaded
 reloadAll();
+
+// Pull the site name + tagline from site_settings and apply them to the page.
+// Falls back silently to the hardcoded HTML if the table isn't reachable.
+async function applySettings() {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('site_name, tagline')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error || !data) return;
+  document.title = data.site_name;
+  const h1 = document.querySelector('header h1');
+  const tag = document.querySelector('header .tagline');
+  if (h1)  h1.textContent  = data.site_name;
+  if (tag) tag.textContent = data.tagline || '';
+}
 
 // --- loaders ---
 async function reloadAll() {

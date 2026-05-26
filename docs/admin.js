@@ -46,6 +46,10 @@ const bkPhotoFile   = $('bk-photo-file');
 const bkPhotoStatus = $('bk-photo-status');
 const bkDelete      = $('bk-delete');
 
+// Site settings card
+const settingsForm    = $('settings-form');
+const settingsMessage = $('settings-message');
+
 // --- state ---
 let bookings = [];
 let bikes    = [];
@@ -70,6 +74,7 @@ bkCancel.addEventListener('click', () => bkModal.close());
 bkForm.addEventListener('submit', saveBike);
 bkPhotoFile.addEventListener('change', handlePhotoUpload);
 bkDelete.addEventListener('click', deleteBike);
+settingsForm.addEventListener('submit', saveSettings);
 
 supabase.auth.onAuthStateChange((_event, session) => renderAuth(session));
 supabase.auth.getSession().then(({ data }) => renderAuth(data.session));
@@ -99,10 +104,51 @@ function renderAuth(session) {
     dashboard.hidden = false;
     whoEmail.textContent = session.user.email || '(unknown)';
     reload();
+    loadSettings();
   } else {
     loginSection.hidden = false;
     dashboard.hidden = true;
   }
+}
+
+// --- site settings ---
+async function loadSettings() {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .select('site_name, tagline')
+    .eq('id', 1)
+    .maybeSingle();
+  if (error || !data) return;
+  settingsForm.site_name.value = data.site_name || '';
+  settingsForm.tagline.value   = data.tagline   || '';
+  // Reflect immediately in the admin tab's title too.
+  document.title = 'Admin · ' + data.site_name;
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+  settingsMessage.textContent = '';
+  settingsMessage.className = 'message';
+  const fd = new FormData(settingsForm);
+  const site_name = (fd.get('site_name') || '').trim();
+  const tagline   = (fd.get('tagline')   || '').trim();
+  if (!site_name) {
+    settingsMessage.textContent = 'Site name cannot be empty.';
+    settingsMessage.classList.add('error');
+    return;
+  }
+  const { error } = await supabase
+    .from('site_settings')
+    .update({ site_name, tagline, updated_at: new Date().toISOString() })
+    .eq('id', 1);
+  if (error) {
+    settingsMessage.textContent = error.message;
+    settingsMessage.classList.add('error');
+    return;
+  }
+  document.title = 'Admin · ' + site_name;
+  liveChannel.send({ type: 'broadcast', event: 'changed', payload: {} });
+  toast('Site settings saved ✓', 'success');
 }
 
 // --- data ---

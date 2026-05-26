@@ -38,6 +38,28 @@
         <button type="button" id="sign-out">Sign out</button>
       </div>
 
+      <!-- SITE SETTINGS -->
+      <section class="card">
+        <header class="card-head">
+          <h2>Site settings</h2>
+        </header>
+        <form id="settings-form">
+          <label>
+            Site name — shows as the page title and the big header on the public booking page.
+            <input type="text" name="site_name" required maxlength="120">
+          </label>
+          <label>
+            Tagline — the smaller line under the site name.
+            <input type="text" name="tagline" maxlength="200">
+          </label>
+          <div id="settings-message" class="message" role="status" aria-live="polite"></div>
+          <div class="actions">
+            <span style="flex:1"></span>
+            <button type="submit" id="settings-save">Save</button>
+          </div>
+        </form>
+      </section>
+
       <!-- BOOKINGS -->
       <section class="card">
         <header class="card-head">
