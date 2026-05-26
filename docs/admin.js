@@ -44,6 +44,7 @@ const bkCancel  = $('bk-cancel');
 const bkTitle   = $('bk-title');
 const bkPhotoFile   = $('bk-photo-file');
 const bkPhotoStatus = $('bk-photo-status');
+const bkDelete      = $('bk-delete');
 
 // --- state ---
 let bookings = [];
@@ -68,6 +69,7 @@ beForm.addEventListener('submit', saveBooking);
 bkCancel.addEventListener('click', () => bkModal.close());
 bkForm.addEventListener('submit', saveBike);
 bkPhotoFile.addEventListener('change', handlePhotoUpload);
+bkDelete.addEventListener('click', deleteBike);
 
 supabase.auth.onAuthStateChange((_event, session) => renderAuth(session));
 supabase.auth.getSession().then(({ data }) => renderAuth(data.session));
@@ -250,7 +252,31 @@ function openBikeEdit(id) {
   bkPhotoFile.value = '';
   bkPhotoStatus.textContent = '';
   bkPhotoStatus.className = 'message';
+  // Delete button only makes sense when editing an existing bike, not when adding.
+  bkDelete.hidden = isNew;
   bkModal.showModal();
+}
+
+async function deleteBike() {
+  if (editingBikeId == null) return;
+  const bike = bikes.find((b) => b.id === editingBikeId);
+  const name = bike ? bike.name : 'this bike';
+  if (!confirm(`Delete "${name}"? This is permanent. If the bike has bookings (past or current), the delete will fail and you should deactivate the bike instead.`)) return;
+  const { error } = await supabase.from('bikes').delete().eq('id', editingBikeId);
+  if (error) {
+    // 23503 = foreign_key_violation — bookings still reference this bike.
+    if (error.code === '23503' || /foreign key|violates|restrict/i.test(error.message)) {
+      bkMessage.textContent = 'Cannot delete — this bike has bookings (past or current). Uncheck Active to hide it without losing the booking history.';
+    } else {
+      bkMessage.textContent = error.message;
+    }
+    bkMessage.classList.add('error');
+    return;
+  }
+  await reload();
+  bkModal.close();
+  liveChannel.send({ type: 'broadcast', event: 'changed', payload: {} });
+  toast('Bike deleted', 'success');
 }
 
 // Upload a photo to Supabase Storage's bike-photos bucket and fill the
