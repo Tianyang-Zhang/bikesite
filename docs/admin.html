@@ -74,7 +74,7 @@
               <th>Type</th>
               <th>Engine</th>
               <th>$/day</th>
-              <th>Order</th>
+              <th>Display order</th>
               <th>Active</th>
               <th></th>
             </tr>
@@ -122,7 +122,10 @@
       <label>Type   <input type="text" name="type" required maxlength="40"></label>
       <label>Engine <input type="text" name="engine" maxlength="40"></label>
       <label>Price per day <input type="number" name="price_per_day" min="0" step="1" required></label>
-      <label>Display order <input type="number" name="display_order" step="1" value="0"></label>
+      <label>
+        Display order — lower number shows first on the public page. <em>Not inventory count;</em> each row is one physical bike.
+        <input type="number" name="display_order" step="1" value="0">
+      </label>
       <label>Photo URL <input type="url" name="photo_url" placeholder="https://..."></label>
       <label class="check">
         <input type="checkbox" name="active" checked>

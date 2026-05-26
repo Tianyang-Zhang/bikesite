@@ -218,7 +218,7 @@ function renderBikes() {
       <td data-label="Type">${esc(b.type)}</td>
       <td data-label="Engine">${esc(b.engine || '')}</td>
       <td data-label="$/day">$${Number(b.price_per_day).toFixed(0)}</td>
-      <td data-label="Order">${esc(b.display_order)}</td>
+      <td data-label="Display order">${esc(b.display_order)}</td>
       <td data-label="Active">${b.active ? '✓' : '—'}</td>
       <td class="row-actions">
         <button type="button" data-edit-bike="${b.id}">Edit</button>
