@@ -42,6 +42,8 @@ const bkForm    = $('bike-edit-form');
 const bkMessage = $('bk-message');
 const bkCancel  = $('bk-cancel');
 const bkTitle   = $('bk-title');
+const bkPhotoFile   = $('bk-photo-file');
+const bkPhotoStatus = $('bk-photo-status');
 
 // --- state ---
 let bookings = [];
@@ -65,6 +67,7 @@ beDelete.addEventListener('click', deleteBooking);
 beForm.addEventListener('submit', saveBooking);
 bkCancel.addEventListener('click', () => bkModal.close());
 bkForm.addEventListener('submit', saveBike);
+bkPhotoFile.addEventListener('change', handlePhotoUpload);
 
 supabase.auth.onAuthStateChange((_event, session) => renderAuth(session));
 supabase.auth.getSession().then(({ data }) => renderAuth(data.session));
@@ -244,7 +247,35 @@ function openBikeEdit(id) {
   bkForm.active.checked      = b.active !== false;
   bkMessage.textContent = '';
   bkMessage.className = 'message';
+  bkPhotoFile.value = '';
+  bkPhotoStatus.textContent = '';
+  bkPhotoStatus.className = 'message';
   bkModal.showModal();
+}
+
+// Upload a photo to Supabase Storage's bike-photos bucket and fill the
+// photo_url field with the resulting public URL. The bucket + RLS are
+// set up in supabase/04_storage.sql.
+async function handlePhotoUpload(e) {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  bkPhotoStatus.textContent = 'Uploading…';
+  bkPhotoStatus.className = 'message';
+  try {
+    const ext = ((file.name.split('.').pop() || 'jpg').toLowerCase()).replace(/[^a-z0-9]/g, '') || 'jpg';
+    const filename = `bike-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from('bike-photos')
+      .upload(filename, file, { contentType: file.type, upsert: false });
+    if (error) throw error;
+    const { data } = supabase.storage.from('bike-photos').getPublicUrl(filename);
+    bkForm.photo_url.value = data.publicUrl;
+    bkPhotoStatus.textContent = 'Uploaded ✓ — Photo URL is now filled. Click Save to attach it to this bike.';
+    bkPhotoStatus.className = 'message success';
+  } catch (err) {
+    bkPhotoStatus.textContent = 'Upload failed: ' + err.message;
+    bkPhotoStatus.className = 'message error';
+  }
 }
 
 async function saveBike(e) {

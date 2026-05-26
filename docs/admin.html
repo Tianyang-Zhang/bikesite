@@ -126,6 +126,11 @@
         Display order — lower number shows first on the public page. <em>Not inventory count;</em> each row is one physical bike.
         <input type="number" name="display_order" step="1" value="0">
       </label>
+      <label>
+        Photo — pick from your phone / computer, or paste a URL below
+        <input type="file" name="photo_file" id="bk-photo-file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="bk-photo-status" class="message"></div>
       <label>Photo URL <input type="url" name="photo_url" placeholder="https://..."></label>
       <label class="check">
         <input type="checkbox" name="active" checked>
