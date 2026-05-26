@@ -1,0 +1,108 @@
+/* Admin-only styles. Loaded after styles.css. */
+
+body.admin main {
+  max-width: 1100px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  background: var(--bg);
+  margin: 1rem auto;
+}
+.card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: 0;
+  text-align: left;
+}
+.card-head h2 { margin: 0; font-size: 1.1rem; font-weight: 600; }
+.card h2 { margin: 0 0 0.75rem; font-size: 1.1rem; font-weight: 600; }
+.card form { display: flex; flex-direction: column; gap: 0.75rem; }
+.card label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; color: var(--fg-muted); }
+.card input, .card select {
+  padding: 0.55rem; border: 1px solid var(--border-strong); border-radius: 6px;
+  font-size: 1rem; color: var(--fg); background: var(--bg); font-family: inherit;
+}
+.card button {
+  padding: 0.55rem 1.1rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--fg);
+  font-family: inherit;
+}
+.card button[type="submit"],
+.card button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+.card button.danger  { background: var(--danger); color: white; border-color: var(--danger); }
+
+.who {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.75rem 1rem; background: var(--bg-soft);
+  border: 1px solid var(--border); border-radius: 8px;
+  font-size: 0.9rem; color: var(--fg-muted);
+}
+.who button {
+  padding: 0.35rem 0.75rem; background: var(--bg); color: var(--fg);
+  border: 1px solid var(--border-strong); border-radius: 6px; font-size: 0.85rem; cursor: pointer;
+}
+
+.grid { width: 100%; border-collapse: collapse; }
+.grid th, .grid td {
+  padding: 0.5rem 0.6rem; text-align: left; vertical-align: middle;
+  border-bottom: 1px solid var(--border); font-size: 0.92rem;
+}
+.grid th { color: var(--fg-muted); font-weight: 500; }
+.grid tr:last-child td { border-bottom: 0; }
+.grid .row-actions { text-align: right; white-space: nowrap; }
+.grid .row-actions button {
+  padding: 0.35rem 0.7rem; font-size: 0.85rem; border-radius: 6px;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--fg);
+  cursor: pointer; margin-left: 0.25rem;
+}
+.grid .row-actions button.danger { color: var(--danger); border-color: var(--danger); }
+
+.status-pill {
+  display: inline-block; padding: 0.1rem 0.5rem; border-radius: 999px;
+  font-size: 0.8rem; font-weight: 500; text-transform: lowercase;
+}
+.status-confirmed { background: #d8f0e0; color: #1d8a3e; }
+.status-cancelled { background: #f0d8d8; color: #d12c2c; }
+
+.check { flex-direction: row !important; align-items: center; gap: 0.5rem; }
+.check input { width: auto !important; }
+
+dialog#booking-edit-modal,
+dialog#bike-edit-modal {
+  border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;
+  width: min(92vw, 440px); color: var(--fg);
+}
+dialog#booking-edit-modal::backdrop,
+dialog#bike-edit-modal::backdrop { background: rgba(0,0,0,0.4); }
+dialog h2 { margin: 0 0 1rem; font-size: 1.15rem; }
+dialog form { display: flex; flex-direction: column; gap: 0.75rem; }
+dialog label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; color: var(--fg-muted); }
+dialog input, dialog select {
+  padding: 0.55rem; border: 1px solid var(--border-strong); border-radius: 6px;
+  font-size: 1rem; color: var(--fg); background: var(--bg); font-family: inherit;
+}
+dialog .actions { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
+dialog button {
+  padding: 0.55rem 1.1rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer;
+  border: 1px solid var(--border-strong); background: var(--bg); color: var(--fg);
+  font-family: inherit;
+}
+dialog button[type="submit"] { background: var(--accent); color: white; border-color: var(--accent); }
+dialog button.danger          { background: var(--danger); color: white; border-color: var(--danger); }
+
+@media (max-width: 600px) {
+  .grid thead { display: none; }
+  .grid, .grid tbody, .grid tr, .grid td { display: block; width: 100%; }
+  .grid tr { border-bottom: 1px solid var(--border); padding: 0.5rem 0; }
+  .grid td { border: 0; padding: 0.2rem 0; }
+  .grid td::before {
+    content: attr(data-label) ": "; color: var(--fg-muted); font-size: 0.85rem; margin-right: 0.25rem;
+  }
+}

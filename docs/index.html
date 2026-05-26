@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bay Area Motorcycle Rentals</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Bay Area Motorcycle Rentals</h1>
+    <p class="tagline">Pick a bike, pick your dates, book it. Live availability.</p>
+  </header>
+
+  <main>
+    <div id="loading" class="state">Loading bikes…</div>
+    <div id="empty" class="state" hidden>
+      <p>No bikes are listed yet — check back soon.</p>
+    </div>
+    <div id="load-error" class="state error" hidden></div>
+    <div id="bikes" class="bikes" aria-live="polite"></div>
+  </main>
+
+  <dialog id="booking-modal" aria-labelledby="modal-title">
+    <form id="booking-form">
+      <h2 id="modal-title">Book <span id="modal-bike-name"></span></h2>
+
+      <label>
+        Start date
+        <input type="date" name="start_date" required>
+      </label>
+      <label>
+        End date
+        <input type="date" name="end_date" required>
+      </label>
+      <label>
+        Your name
+        <input type="text" name="renter_name" required maxlength="80">
+      </label>
+      <label>
+        Email or phone
+        <input type="text" name="renter_contact" required maxlength="120">
+      </label>
+
+      <div id="booking-message" class="message" role="status" aria-live="polite"></div>
+
+      <div class="actions">
+        <button type="button" id="booking-cancel">Cancel</button>
+        <button type="submit" id="booking-submit">Book it</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="booking.js"></script>
+</body>
+</html>

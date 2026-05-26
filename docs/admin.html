@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin · Bay Area Motorcycle Rentals</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin">
+  <header>
+    <h1>Manager Console</h1>
+    <p class="tagline">Bookings + bikes + photos. Live.</p>
+  </header>
+
+  <main>
+    <!-- LOGIN -->
+    <section id="login-section" class="card">
+      <h2>Sign in</h2>
+      <form id="login-form">
+        <label>
+          Email
+          <input type="email" name="email" required autocomplete="username">
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" required autocomplete="current-password">
+        </label>
+        <div id="login-message" class="message" role="status" aria-live="polite"></div>
+        <button type="submit" id="login-submit">Sign in</button>
+      </form>
+    </section>
+
+    <!-- DASHBOARD (hidden until signed in) -->
+    <section id="dashboard" hidden>
+      <div class="who">
+        Signed in as <strong id="who-email"></strong>
+        <button type="button" id="sign-out">Sign out</button>
+      </div>
+
+      <!-- BOOKINGS -->
+      <section class="card">
+        <header class="card-head">
+          <h2>Bookings</h2>
+          <button type="button" id="bookings-refresh">Refresh</button>
+        </header>
+        <div id="bookings-empty" class="state" hidden>No bookings yet.</div>
+        <table id="bookings-table" class="grid">
+          <thead>
+            <tr>
+              <th>Bike</th>
+              <th>Dates</th>
+              <th>Renter</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bookings-body"></tbody>
+        </table>
+      </section>
+
+      <!-- BIKES -->
+      <section class="card">
+        <header class="card-head">
+          <h2>Bikes</h2>
+          <button type="button" id="add-bike">+ Add bike</button>
+        </header>
+        <div id="bikes-empty" class="state" hidden>No bikes yet — add one.</div>
+        <table id="bikes-table" class="grid">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Engine</th>
+              <th>$/day</th>
+              <th>Order</th>
+              <th>Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="bikes-body"></tbody>
+        </table>
+      </section>
+    </section>
+  </main>
+
+  <!-- BOOKING EDIT MODAL -->
+  <dialog id="booking-edit-modal" aria-labelledby="be-title">
+    <form id="booking-edit-form">
+      <h2 id="be-title">Edit booking</h2>
+      <label>
+        Bike
+        <select name="bike_id" id="be-bike" required></select>
+      </label>
+      <label>Start date <input type="date" name="start_date" required></label>
+      <label>End date   <input type="date" name="end_date"   required></label>
+      <label>Renter name    <input type="text" name="renter_name" required maxlength="80"></label>
+      <label>Renter contact <input type="text" name="renter_contact" required maxlength="120"></label>
+      <label>
+        Status
+        <select name="status">
+          <option value="confirmed">confirmed</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+      </label>
+      <div id="be-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="be-delete" class="danger">Delete</button>
+        <span style="flex:1"></span>
+        <button type="button" id="be-cancel">Cancel</button>
+        <button type="submit" id="be-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- BIKE EDIT MODAL -->
+  <dialog id="bike-edit-modal" aria-labelledby="bk-title">
+    <form id="bike-edit-form">
+      <h2 id="bk-title">Edit bike</h2>
+      <label>Name   <input type="text" name="name" required maxlength="120"></label>
+      <label>Type   <input type="text" name="type" required maxlength="40"></label>
+      <label>Engine <input type="text" name="engine" maxlength="40"></label>
+      <label>Price per day <input type="number" name="price_per_day" min="0" step="1" required></label>
+      <label>Display order <input type="number" name="display_order" step="1" value="0"></label>
+      <label>Photo URL <input type="url" name="photo_url" placeholder="https://..."></label>
+      <label class="check">
+        <input type="checkbox" name="active" checked>
+        Active (shown on the public page)
+      </label>
+      <div id="bk-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="bk-cancel">Cancel</button>
+        <button type="submit" id="bk-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script type="module" src="admin.js"></script>
+</body>
+</html>
