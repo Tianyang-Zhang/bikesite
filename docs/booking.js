@@ -1,4 +1,4 @@
-// BikeSite v2 — public booking page.
+// Rental tab — book a bike for a date range.
 //
 // Responsibilities:
 //   * load the bikes + the contact-free availability view (anon SELECT, RLS-fenced)
@@ -9,62 +9,43 @@
 //     intentionally has no SELECT on `bookings` — so postgres_changes events
 //     would be filtered out by RLS. Broadcast has no RLS check; it's pub/sub.)
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SUPABASE_URL, SUPABASE_KEY } from './supabase-config.js';
+import {
+  supabase, liveChannel,
+  $, esc, fmtDate, money, setMsg, showToast, broadcastChange,
+} from './lib.js';
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-
-// --- DOM ---
-const $ = (id) => document.getElementById(id);
-const bikesEl       = $('bikes');
-const loadingEl     = $('loading');
-const emptyEl       = $('empty');
-const loadErrorEl   = $('load-error');
-const modal         = $('booking-modal');
-const form          = $('booking-form');
-const modalBikeName = $('modal-bike-name');
-const messageEl     = $('booking-message');
-const cancelBtn     = $('booking-cancel');
-const submitBtn     = $('booking-submit');
-const toastEl       = $('toast');
-
-// --- state ---
+// --- state (module-scoped — initRentalTab is called once) ---
 let bikes        = [];      // [{id, name, type, engine, price_per_day, photo_url, ...}]
 let availability = [];      // [{bike_id, start_date, end_date}]
 let selectedBike = null;
 
-// --- live channel (broadcast — no RLS gating) ---
-const liveChannel = supabase.channel('availability-changes', {
-  config: { broadcast: { self: false } },
-});
-liveChannel
-  .on('broadcast', { event: 'changed' }, async () => {
+// DOM refs (resolved on init so the module can be safely tree-shaken before
+// its tab is shown).
+let bikesEl, loadingEl, emptyEl, loadErrorEl;
+let modal, form, modalBikeName, messageEl, cancelBtn, submitBtn;
+
+export function initRentalTab() {
+  bikesEl       = $('bikes');
+  loadingEl     = $('rental-loading');
+  emptyEl       = $('rental-empty');
+  loadErrorEl   = $('rental-error');
+  modal         = $('booking-modal');
+  form          = $('booking-form');
+  modalBikeName = $('modal-bike-name');
+  messageEl     = $('booking-message');
+  cancelBtn     = $('booking-cancel');
+  submitBtn     = $('booking-submit');
+
+  cancelBtn.addEventListener('click', () => modal.close());
+  form.addEventListener('submit', handleSubmit);
+
+  // Refresh availability whenever any other open page broadcasts a change.
+  liveChannel.on('broadcast', { event: 'availability' }, async () => {
     await reloadAvailability();
-    await applySettings();
     render();
-  })
-  .subscribe();
+  });
 
-// --- boot ---
-cancelBtn.addEventListener('click', () => modal.close());
-form.addEventListener('submit', handleSubmit);
-applySettings();   // fire-and-forget — replaces hardcoded title/tagline once loaded
-reloadAll();
-
-// Pull the site name + tagline from site_settings and apply them to the page.
-// Falls back silently to the hardcoded HTML if the table isn't reachable.
-async function applySettings() {
-  const { data, error } = await supabase
-    .from('site_settings')
-    .select('site_name, tagline')
-    .eq('id', 1)
-    .maybeSingle();
-  if (error || !data) return;
-  document.title = data.site_name;
-  const h1 = document.querySelector('header h1');
-  const tag = document.querySelector('header .tagline');
-  if (h1)  h1.textContent  = data.site_name;
-  if (tag) tag.textContent = data.tagline || '';
+  reloadAll();
 }
 
 // --- loaders ---
@@ -119,7 +100,7 @@ function bikeCard(bike) {
     : '<div class="photo-placeholder">No photo yet</div>';
 
   const meta = [bike.type, bike.engine].filter(Boolean).map(esc).join(' · ');
-  const price = `$${Number(bike.price_per_day).toFixed(0)}/day`;
+  const price = `${money(bike.price_per_day)}/day`;
 
   const takenLine = taken.length
     ? `<p class="taken-dates">Taken: ${taken
@@ -128,7 +109,7 @@ function bikeCard(bike) {
     : '<p class="taken-dates">Open all dates</p>';
 
   return `
-    <article class="bike">
+    <article class="card-item">
       ${photo}
       <h2>${esc(bike.name)}</h2>
       <p class="meta">${meta}</p>
@@ -146,8 +127,7 @@ function openBooking(bikeId) {
 
   modalBikeName.textContent = selectedBike.name;
   form.reset();
-  messageEl.textContent = '';
-  messageEl.className = 'message';
+  setMsg(messageEl, '');
   submitBtn.disabled = false;
 
   const today = new Date().toISOString().slice(0, 10);
@@ -159,8 +139,7 @@ function openBooking(bikeId) {
 
 async function handleSubmit(e) {
   e.preventDefault();
-  messageEl.textContent = '';
-  messageEl.className = 'message';
+  setMsg(messageEl, '');
 
   const fd = new FormData(form);
   const start = fd.get('start_date');
@@ -169,10 +148,10 @@ async function handleSubmit(e) {
   const contact = (fd.get('renter_contact') || '').trim();
 
   // Client-side checks — friendlier errors before the server says no.
-  if (!start || !end) return setMsg('Pick both dates.', 'error');
-  if (end < start)    return setMsg('End date can\'t be before start date.', 'error');
-  if (!name)          return setMsg('Your name is required.', 'error');
-  if (!contact)       return setMsg('Your WeChat ID is required so we can reach you.', 'error');
+  if (!start || !end) return setMsg(messageEl, 'Pick both dates.', 'error');
+  if (end < start)    return setMsg(messageEl, 'End date can\'t be before start date.', 'error');
+  if (!name)          return setMsg(messageEl, 'Your name is required.', 'error');
+  if (!contact)       return setMsg(messageEl, 'Your WeChat ID is required so we can reach you.', 'error');
 
   submitBtn.disabled = true;
 
@@ -192,19 +171,19 @@ async function handleSubmit(e) {
     //   23P01 — the no_overlap exclusion constraint kicked in: dates were just taken.
     //   42501 — the public INSERT policy CHECK failed (past date, empty fields, etc.)
     if (error.code === '23P01' || /no_overlap/i.test(error.message)) {
-      return setMsg('Sorry — those dates were just taken on this bike. Pick different dates.', 'error');
+      return setMsg(messageEl, 'Sorry — those dates were just taken on this bike. Pick different dates.', 'error');
     }
     if (error.code === '42501' || /row-level security/i.test(error.message)) {
-      return setMsg('Booking rejected — the dates must start today or later, end within 30 days, and name + WeChat ID must be filled in.', 'error');
+      return setMsg(messageEl, 'Booking rejected — the dates must start today or later, end within 30 days, and name + WeChat ID must be filled in.', 'error');
     }
-    return setMsg('Could not save: ' + error.message, 'error');
+    return setMsg(messageEl, 'Could not save: ' + error.message, 'error');
   }
 
-  setMsg('Booked! ✓', 'success');
+  setMsg(messageEl, 'Booked! ✓', 'success');
   await reloadAvailability();
   render();
   // Tell other open tabs/devices to refresh.
-  liveChannel.send({ type: 'broadcast', event: 'changed', payload: { bike_id: selectedBike.id } });
+  broadcastChange('availability', { bike_id: selectedBike.id });
 
   setTimeout(() => {
     modal.close();
@@ -213,30 +192,9 @@ async function handleSubmit(e) {
 }
 
 // --- helpers ---
-function esc(s) {
-  if (s == null) return '';
-  return String(s).replace(/[&<>"']/g, (c) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  })[c]);
-}
-function fmtDate(iso) {
-  // "2026-07-12" -> "Jul 12"
-  const d = new Date(iso + 'T00:00:00');
-  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-function setMsg(text, kind) {
-  messageEl.textContent = text;
-  messageEl.className = 'message' + (kind ? ' ' + kind : '');
-}
 function showLoadError(msg) {
   bikesEl.innerHTML = '';
   emptyEl.hidden = true;
   loadErrorEl.hidden = false;
   loadErrorEl.textContent = msg;
-}
-function showToast(msg) {
-  toastEl.textContent = msg;
-  toastEl.hidden = false;
-  clearTimeout(showToast._t);
-  showToast._t = setTimeout(() => (toastEl.hidden = true), 2400);
 }

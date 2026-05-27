@@ -11,6 +11,7 @@ SQL for the v2 backend (Supabase Postgres). Apply files in the Supabase
 | `03_rls.sql` | 2 | Row-Level Security: the public can read bikes and create bookings; only the signed-in manager can see renter contacts or edit anything. *Phase 2.* |
 | `04_storage.sql` | 4 | Storage bucket `bike-photos` + RLS. Anyone reads photos (so the public page can `<img>` them); only the manager uploads/replaces/deletes. |
 | `05_site_settings.sql` | — | Single-row `site_settings` table (site name + tagline). Editable from the admin's *Site settings* card; anon reads on every public page load. |
+| `06_marketplace.sql` | — | Sell + Parts tabs: `sale_bikes`, `parts`, `orders` tables, RLS, public listing views, payment-ready columns on `orders` (`payment_provider`, `payment_session_id`, `payment_intent_id` — all null until a payment provider is wired up). See `../ARCHITECTURE-MARKETPLACE.md` for the integration plan. |
 
 ## Keys
 

@@ -25,10 +25,11 @@ body.admin main {
 .card h2 { margin: 0 0 0.75rem; font-size: 1.1rem; font-weight: 600; }
 .card form { display: flex; flex-direction: column; gap: 0.75rem; }
 .card label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; color: var(--fg-muted); }
-.card input, .card select {
+.card input, .card select, .card textarea {
   padding: 0.55rem; border: 1px solid var(--border-strong); border-radius: 6px;
   font-size: 1rem; color: var(--fg); background: var(--bg); font-family: inherit;
 }
+.card textarea { resize: vertical; min-height: 4em; }
 .card button {
   padding: 0.55rem 1.1rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer;
   border: 1px solid var(--border-strong); background: var(--bg); color: var(--fg);
@@ -70,24 +71,47 @@ body.admin main {
 }
 .status-confirmed { background: #d8f0e0; color: #1d8a3e; }
 .status-cancelled { background: #f0d8d8; color: #d12c2c; }
+.status-pending   { background: #fff1cc; color: #8a6d1d; }
+.status-paid      { background: #d8e6f0; color: #1d558a; }
+.status-fulfilled { background: #d8f0e0; color: #1d8a3e; }
+
+.hint {
+  margin: 0 0 0.75rem;
+  color: var(--fg-muted);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+.hint code {
+  background: var(--bg-soft);
+  padding: 0 0.25rem;
+  border-radius: 3px;
+  font-size: 0.85em;
+}
 
 .check { flex-direction: row !important; align-items: center; gap: 0.5rem; }
 .check input { width: auto !important; }
 
 dialog#booking-edit-modal,
-dialog#bike-edit-modal {
+dialog#bike-edit-modal,
+dialog#sale-bike-edit-modal,
+dialog#part-edit-modal,
+dialog#order-edit-modal {
   border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem;
   width: min(92vw, 440px); color: var(--fg);
 }
 dialog#booking-edit-modal::backdrop,
-dialog#bike-edit-modal::backdrop { background: rgba(0,0,0,0.4); }
+dialog#bike-edit-modal::backdrop,
+dialog#sale-bike-edit-modal::backdrop,
+dialog#part-edit-modal::backdrop,
+dialog#order-edit-modal::backdrop { background: rgba(0,0,0,0.4); }
 dialog h2 { margin: 0 0 1rem; font-size: 1.15rem; }
 dialog form { display: flex; flex-direction: column; gap: 0.75rem; }
 dialog label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; color: var(--fg-muted); }
-dialog input, dialog select {
+dialog input, dialog select, dialog textarea {
   padding: 0.55rem; border: 1px solid var(--border-strong); border-radius: 6px;
   font-size: 1rem; color: var(--fg); background: var(--bg); font-family: inherit;
 }
+dialog textarea { resize: vertical; min-height: 4em; }
 dialog .actions { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.5rem; }
 dialog button {
   padding: 0.55rem 1.1rem; border-radius: 6px; font-size: 0.95rem; cursor: pointer;

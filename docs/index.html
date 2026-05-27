@@ -10,17 +10,56 @@
   <header>
     <h1>Bay Area Motorcycle Rentals</h1>
     <p class="tagline">Pick a bike, pick your dates, book it. Live availability.</p>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" data-tab="rental" aria-selected="true">Rental</button>
+      <button type="button" role="tab" data-tab="sell"   aria-selected="false">Sell</button>
+      <button type="button" role="tab" data-tab="parts"  aria-selected="false">Parts</button>
+    </nav>
   </header>
 
   <main>
-    <div id="loading" class="state">Loading bikes…</div>
-    <div id="empty" class="state" hidden>
-      <p>No bikes are listed yet — check back soon.</p>
-    </div>
-    <div id="load-error" class="state error" hidden></div>
-    <div id="bikes" class="bikes" aria-live="polite"></div>
+    <!-- ============================================================
+         Rental tab — book a bike for a date range.
+         ============================================================ -->
+    <section id="tab-rental" class="tab-panel" role="tabpanel" aria-labelledby="rental">
+      <div id="rental-loading" class="state">Loading bikes…</div>
+      <div id="rental-empty" class="state" hidden>
+        <p>No bikes are listed yet — check back soon.</p>
+      </div>
+      <div id="rental-error" class="state error" hidden></div>
+      <div id="bikes" class="cards" aria-live="polite"></div>
+    </section>
+
+    <!-- ============================================================
+         Sell tab — used bikes for sale.
+         ============================================================ -->
+    <section id="tab-sell" class="tab-panel" role="tabpanel" aria-labelledby="sell" hidden>
+      <div id="sell-loading" class="state">Loading bikes for sale…</div>
+      <div id="sell-empty" class="state" hidden>
+        <p>No bikes for sale right now — check back soon.</p>
+      </div>
+      <div id="sell-error" class="state error" hidden></div>
+      <div id="sell-list" class="cards" aria-live="polite"></div>
+    </section>
+
+    <!-- ============================================================
+         Parts tab — accessories / consumables for sale.
+         ============================================================ -->
+    <section id="tab-parts" class="tab-panel" role="tabpanel" aria-labelledby="parts" hidden>
+      <div id="parts-loading" class="state">Loading parts…</div>
+      <div id="parts-empty" class="state" hidden>
+        <p>No parts listed yet — check back soon.</p>
+      </div>
+      <div id="parts-error" class="state error" hidden></div>
+      <div id="parts-list" class="cards" aria-live="polite"></div>
+    </section>
   </main>
 
+  <!-- ============================================================
+       Modals
+       ============================================================ -->
+
+  <!-- Rental booking modal (existing behavior) -->
   <dialog id="booking-modal" aria-labelledby="modal-title">
     <form id="booking-form">
       <h2 id="modal-title">Book <span id="modal-bike-name"></span></h2>
@@ -51,8 +90,61 @@
     </form>
   </dialog>
 
+  <!-- Sell-bike inquire modal (qty is always 1, so it's not in the form) -->
+  <dialog id="sell-inquire-modal" aria-labelledby="sell-inquire-title">
+    <form id="sell-inquire-form">
+      <h2 id="sell-inquire-title">Reserve <span id="sell-inquire-bike-name"></span></h2>
+      <p class="inquire-summary">
+        Price: <strong id="sell-inquire-price"></strong>.
+        Send your details — we'll message you on WeChat to arrange the handover.
+      </p>
+      <label>
+        Your name
+        <input type="text" name="buyer_name" required maxlength="80">
+      </label>
+      <label>
+        WeChat ID
+        <input type="text" name="buyer_contact" required maxlength="120" placeholder="Your WeChat ID">
+      </label>
+      <div id="sell-inquire-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="sell-inquire-cancel">Cancel</button>
+        <button type="submit" id="sell-inquire-submit">Send inquiry</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Parts inquire modal (qty matters here) -->
+  <dialog id="parts-inquire-modal" aria-labelledby="parts-inquire-title">
+    <form id="parts-inquire-form">
+      <h2 id="parts-inquire-title">Order <span id="parts-inquire-name"></span></h2>
+      <p class="inquire-summary">
+        Unit price: <strong id="parts-inquire-unit"></strong>.
+        <span id="parts-inquire-stock-line"></span>
+      </p>
+      <label>
+        Quantity
+        <input type="number" name="qty" required min="1" value="1">
+      </label>
+      <p class="inquire-total">Total: <strong id="parts-inquire-total">$0</strong></p>
+      <label>
+        Your name
+        <input type="text" name="buyer_name" required maxlength="80">
+      </label>
+      <label>
+        WeChat ID
+        <input type="text" name="buyer_contact" required maxlength="120" placeholder="Your WeChat ID">
+      </label>
+      <div id="parts-inquire-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="parts-inquire-cancel">Cancel</button>
+        <button type="submit" id="parts-inquire-submit">Send inquiry</button>
+      </div>
+    </form>
+  </dialog>
+
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-  <script type="module" src="booking.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

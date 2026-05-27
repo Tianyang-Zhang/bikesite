@@ -82,10 +82,10 @@
         </table>
       </section>
 
-      <!-- BIKES -->
+      <!-- BIKES (rental) -->
       <section class="card">
         <header class="card-head">
-          <h2>Bikes</h2>
+          <h2>Rental bikes</h2>
           <button type="button" id="add-bike">+ Add bike</button>
         </header>
         <div id="bikes-empty" class="state" hidden>No bikes yet — add one.</div>
@@ -102,6 +102,86 @@
             </tr>
           </thead>
           <tbody id="bikes-body"></tbody>
+        </table>
+      </section>
+
+      <!-- SALE BIKES -->
+      <section class="card">
+        <header class="card-head">
+          <h2>Bikes for sale</h2>
+          <button type="button" id="add-sale-bike">+ Add sale bike</button>
+        </header>
+        <div id="sale-bikes-empty" class="state" hidden>No bikes for sale yet — add one.</div>
+        <table id="sale-bikes-table" class="grid">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Type</th>
+              <th>Year</th>
+              <th>Mileage (km)</th>
+              <th>Price</th>
+              <th>Display order</th>
+              <th>Active</th>
+              <th>Sold</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="sale-bikes-body"></tbody>
+        </table>
+      </section>
+
+      <!-- PARTS -->
+      <section class="card">
+        <header class="card-head">
+          <h2>Parts</h2>
+          <button type="button" id="add-part">+ Add part</button>
+        </header>
+        <div id="parts-empty" class="state" hidden>No parts yet — add one.</div>
+        <table id="parts-table" class="grid">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Condition</th>
+              <th>Price</th>
+              <th>Stock</th>
+              <th>Display order</th>
+              <th>Active</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="parts-body"></tbody>
+        </table>
+      </section>
+
+      <!-- ORDERS -->
+      <section class="card">
+        <header class="card-head">
+          <h2>Orders</h2>
+          <button type="button" id="orders-refresh">Refresh</button>
+        </header>
+        <p class="hint">
+          Buyers submit inquiries from the Sell + Parts tabs as <code>pending</code> orders.
+          You follow up on WeChat, then move the row to <code>paid</code> (after they pay
+          out-of-band) and <code>fulfilled</code> (after the handover).
+          Payment-provider fields appear here once you wire one up — they stay blank for now.
+        </p>
+        <div id="orders-empty" class="state" hidden>No orders yet.</div>
+        <table id="orders-table" class="grid">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Buyer</th>
+              <th>WeChat</th>
+              <th>Qty</th>
+              <th>Total</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Payment</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="orders-body"></tbody>
         </table>
       </section>
     </section>
@@ -136,7 +216,7 @@
     </form>
   </dialog>
 
-  <!-- BIKE EDIT MODAL -->
+  <!-- RENTAL BIKE EDIT MODAL -->
   <dialog id="bike-edit-modal" aria-labelledby="bk-title">
     <form id="bike-edit-form">
       <h2 id="bk-title">Edit bike</h2>
@@ -164,6 +244,126 @@
         <span style="flex:1"></span>
         <button type="button" id="bk-cancel">Cancel</button>
         <button type="submit" id="bk-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- SALE BIKE EDIT MODAL -->
+  <dialog id="sale-bike-edit-modal" aria-labelledby="sb-title">
+    <form id="sale-bike-edit-form">
+      <h2 id="sb-title">Edit sale bike</h2>
+      <label>Name <input type="text" name="name" required maxlength="120"></label>
+      <label>Type <input type="text" name="type" required maxlength="40"></label>
+      <label>Engine <input type="text" name="engine" maxlength="40"></label>
+      <label>Year <input type="number" name="year" min="1900" max="2100" step="1"></label>
+      <label>Mileage (km) <input type="number" name="mileage_km" min="0" step="1"></label>
+      <label>Condition <input type="text" name="condition" maxlength="80" placeholder="excellent / minor scuffs / …"></label>
+      <label>Description <textarea name="description" rows="3" maxlength="1200"></textarea></label>
+      <label>Price <input type="number" name="price" min="0" step="1" required></label>
+      <label>
+        Display order — lower number shows first on the public page.
+        <input type="number" name="display_order" step="1" value="0">
+      </label>
+      <label>
+        Photo — pick from your phone / computer, or paste a URL below
+        <input type="file" name="photo_file" id="sb-photo-file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="sb-photo-status" class="message"></div>
+      <label>Photo URL <input type="url" name="photo_url" placeholder="https://..."></label>
+      <label class="check">
+        <input type="checkbox" name="active" checked>
+        Active (shown on the public Sell tab)
+      </label>
+      <label class="check">
+        <input type="checkbox" name="sold">
+        Sold (greys out the listing and disables the Inquire button)
+      </label>
+      <div id="sb-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="sb-delete" class="danger">Delete</button>
+        <span style="flex:1"></span>
+        <button type="button" id="sb-cancel">Cancel</button>
+        <button type="submit" id="sb-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- PART EDIT MODAL -->
+  <dialog id="part-edit-modal" aria-labelledby="pt-title">
+    <form id="part-edit-form">
+      <h2 id="pt-title">Edit part</h2>
+      <label>Name <input type="text" name="name" required maxlength="120"></label>
+      <label>Category <input type="text" name="category" required maxlength="40" placeholder="helmet / chain / tire / …"></label>
+      <label>
+        Condition
+        <select name="condition">
+          <option value="new">new</option>
+          <option value="used">used</option>
+        </select>
+      </label>
+      <label>Description <textarea name="description" rows="3" maxlength="1200"></textarea></label>
+      <label>Price <input type="number" name="price" min="0" step="0.01" required></label>
+      <label>Stock <input type="number" name="stock" min="0" step="1" value="1" required></label>
+      <label>
+        Display order — lower number shows first on the public page.
+        <input type="number" name="display_order" step="1" value="0">
+      </label>
+      <label>
+        Photo — pick from your phone / computer, or paste a URL below
+        <input type="file" name="photo_file" id="pt-photo-file" accept="image/jpeg,image/png,image/webp">
+      </label>
+      <div id="pt-photo-status" class="message"></div>
+      <label>Photo URL <input type="url" name="photo_url" placeholder="https://..."></label>
+      <label class="check">
+        <input type="checkbox" name="active" checked>
+        Active (shown on the public Parts tab)
+      </label>
+      <div id="pt-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="pt-delete" class="danger">Delete</button>
+        <span style="flex:1"></span>
+        <button type="button" id="pt-cancel">Cancel</button>
+        <button type="submit" id="pt-save">Save</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ORDER EDIT MODAL -->
+  <dialog id="order-edit-modal" aria-labelledby="or-title">
+    <form id="order-edit-form">
+      <h2 id="or-title">Order details</h2>
+      <p id="or-summary" class="inquire-summary"></p>
+      <label>Buyer name <input type="text" name="buyer_name" required maxlength="80"></label>
+      <label>Buyer WeChat <input type="text" name="buyer_contact" required maxlength="120"></label>
+      <label>Quantity <input type="number" name="qty" min="1" step="1" required></label>
+      <label>Unit price <input type="number" name="unit_price" min="0" step="0.01" required></label>
+      <label>Total price <input type="number" name="total_price" min="0" step="0.01" required></label>
+      <label>
+        Status
+        <select name="status">
+          <option value="pending">pending</option>
+          <option value="paid">paid</option>
+          <option value="fulfilled">fulfilled</option>
+          <option value="cancelled">cancelled</option>
+        </select>
+      </label>
+      <label>
+        Payment provider (set when a payment integration lands)
+        <select name="payment_provider">
+          <option value="">— none —</option>
+          <option value="manual">manual (off-platform)</option>
+          <option value="stripe">stripe</option>
+        </select>
+      </label>
+      <label>Payment session ID <input type="text" name="payment_session_id" maxlength="200"></label>
+      <label>Payment intent ID <input type="text" name="payment_intent_id" maxlength="200"></label>
+      <label>Notes <textarea name="notes" rows="3" maxlength="1200"></textarea></label>
+      <div id="or-message" class="message" role="status" aria-live="polite"></div>
+      <div class="actions">
+        <button type="button" id="or-delete" class="danger">Delete</button>
+        <span style="flex:1"></span>
+        <button type="button" id="or-cancel">Cancel</button>
+        <button type="submit" id="or-save">Save</button>
       </div>
     </form>
   </dialog>

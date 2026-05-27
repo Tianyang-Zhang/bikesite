@@ -25,7 +25,7 @@ body {
 }
 
 header {
-  padding: 1.5rem 1rem;
+  padding: 1.5rem 1rem 0;
   border-bottom: 1px solid var(--border);
   text-align: center;
 }
@@ -41,11 +41,43 @@ header .tagline {
   font-size: 0.95rem;
 }
 
+/* Tabs strip — sits just below the title, above the panel content. */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.25rem;
+  margin: 1.1rem auto 0;
+  max-width: 880px;
+  padding: 0 0.5rem;
+}
+.tabs button {
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0.6rem 1rem;
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--fg-muted);
+  cursor: pointer;
+  border-radius: 0;
+  margin-bottom: -1px;        /* sit on top of the header underline */
+}
+.tabs button:hover         { color: var(--fg); }
+.tabs button.active,
+.tabs button[aria-selected="true"] {
+  color: var(--fg);
+  border-bottom-color: var(--accent);
+  font-weight: 500;
+}
+
 main {
   padding: 1rem;
   max-width: 880px;
   margin: 0 auto;
 }
+
+/* A panel that's hidden (other-tab) shouldn't take layout space. */
+.tab-panel[hidden] { display: none; }
 
 .state {
   text-align: center;
@@ -54,16 +86,17 @@ main {
 }
 .state.error { color: var(--danger); }
 
-.bikes {
+/* Shared card grid — used by rental, sell, and parts tabs. */
+.cards {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1rem;
 }
 @media (min-width: 640px) {
-  .bikes { grid-template-columns: 1fr 1fr; }
+  .cards { grid-template-columns: 1fr 1fr; }
 }
 
-.bike {
+.card-item {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1rem;
@@ -71,8 +104,8 @@ main {
   display: flex;
   flex-direction: column;
 }
-.bike img,
-.bike .photo-placeholder {
+.card-item img,
+.card-item .photo-placeholder {
   width: 100%;
   height: 200px;
   object-fit: cover;
@@ -80,33 +113,54 @@ main {
   margin-bottom: 0.75rem;
   background: var(--bg-soft);
 }
-.bike .photo-placeholder {
+.card-item .photo-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--fg-faint);
   font-size: 0.9rem;
 }
-.bike h2 {
+.card-item h2 {
   margin: 0 0 0.25rem;
   font-size: 1.125rem;
   font-weight: 600;
 }
-.bike .meta {
+.card-item .meta {
   color: var(--fg-muted);
   font-size: 0.9rem;
+  margin: 0 0 0.4rem;
+}
+.card-item .price {
+  font-weight: 600;
   margin: 0 0 0.5rem;
 }
-.bike .price {
-  font-weight: 600;
-  margin: 0 0 0.75rem;
-}
-.bike .taken-dates {
+.card-item .taken-dates,
+.card-item .stock {
   font-size: 0.85rem;
   color: var(--fg-faint);
+  margin: 0 0 0.5rem;
+}
+.card-item .stock.out { color: var(--danger); }
+.card-item .description {
+  font-size: 0.9rem;
+  color: var(--fg);
   margin: 0 0 0.75rem;
 }
-.bike button {
+.card-item.is-sold {
+  opacity: 0.6;
+}
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  vertical-align: middle;
+  margin-left: 0.25rem;
+}
+.badge-sold { background: var(--danger); color: white; }
+.card-item button {
   margin-top: auto;
   width: 100%;
   padding: 0.75rem 1rem;
@@ -118,37 +172,60 @@ main {
   font-weight: 500;
   cursor: pointer;
 }
-.bike button:hover { background: var(--accent-hover); }
-.bike button:disabled { background: var(--fg-faint); cursor: not-allowed; }
+.card-item button:hover    { background: var(--accent-hover); }
+.card-item button:disabled { background: var(--fg-faint); cursor: not-allowed; }
 
-/* Booking modal */
-dialog#booking-modal {
+/* Inquire-modal supporting text */
+.inquire-summary {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: var(--fg-muted);
+}
+.inquire-total {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Public modals — booking + sell-inquire + parts-inquire share these styles. */
+dialog#booking-modal,
+dialog#sell-inquire-modal,
+dialog#parts-inquire-modal {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 1.5rem;
-  width: min(90vw, 380px);
+  width: min(90vw, 400px);
   color: var(--fg);
 }
-dialog#booking-modal::backdrop {
+dialog#booking-modal::backdrop,
+dialog#sell-inquire-modal::backdrop,
+dialog#parts-inquire-modal::backdrop {
   background: rgba(0, 0, 0, 0.4);
 }
-dialog#booking-modal h2 {
+dialog#booking-modal h2,
+dialog#sell-inquire-modal h2,
+dialog#parts-inquire-modal h2 {
   margin: 0 0 1rem;
   font-size: 1.2rem;
 }
-dialog#booking-modal form {
+dialog#booking-modal form,
+dialog#sell-inquire-modal form,
+dialog#parts-inquire-modal form {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
 }
-dialog#booking-modal label {
+dialog#booking-modal label,
+dialog#sell-inquire-modal label,
+dialog#parts-inquire-modal label {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.9rem;
   color: var(--fg-muted);
 }
-dialog#booking-modal input {
+dialog#booking-modal input,
+dialog#sell-inquire-modal input,
+dialog#parts-inquire-modal input {
   padding: 0.55rem;
   border: 1px solid var(--border-strong);
   border-radius: 6px;
@@ -157,13 +234,17 @@ dialog#booking-modal input {
   background: var(--bg);
   font-family: inherit;
 }
-dialog#booking-modal .actions {
+dialog#booking-modal .actions,
+dialog#sell-inquire-modal .actions,
+dialog#parts-inquire-modal .actions {
   display: flex;
   gap: 0.5rem;
   justify-content: flex-end;
   margin-top: 0.5rem;
 }
-dialog#booking-modal button {
+dialog#booking-modal button,
+dialog#sell-inquire-modal button,
+dialog#parts-inquire-modal button {
   padding: 0.55rem 1.1rem;
   border-radius: 6px;
   font-size: 0.95rem;
@@ -173,12 +254,16 @@ dialog#booking-modal button {
   color: var(--fg);
   font-family: inherit;
 }
-dialog#booking-modal button[type="submit"] {
+dialog#booking-modal button[type="submit"],
+dialog#sell-inquire-modal button[type="submit"],
+dialog#parts-inquire-modal button[type="submit"] {
   background: var(--accent);
   color: white;
   border-color: var(--accent);
 }
-dialog#booking-modal button[type="submit"]:disabled {
+dialog#booking-modal button[type="submit"]:disabled,
+dialog#sell-inquire-modal button[type="submit"]:disabled,
+dialog#parts-inquire-modal button[type="submit"]:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
